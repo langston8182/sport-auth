@@ -176,7 +176,7 @@ export class AuthService {
 
     /** @param {any} event */
     static async refresh(event) {
-        await getCognitoConfig(); // s’assure que tout est prêt
+        const cfgCognito = await getCognitoConfig();
 
         let cookieHeader = event.headers?.cookie || event.headers?.Cookie || "";
         if (!cookieHeader && Array.isArray(event.cookies) && event.cookies.length) {
@@ -191,9 +191,13 @@ export class AuthService {
         form.set("client_id", (await getCognitoConfig()).CLIENT_ID);
         form.set("refresh_token", refresh);
 
+        const basic = Buffer.from(`${cfgCognito.CLIENT_ID}:${cfgCognito.CLIENT_SECRET}`).toString('base64');
         const res = await fetch(`${(await getCognitoConfig()).COGNITO_DOMAIN}/oauth2/token`, {
             method: "POST",
-            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "Authorization": `Basic ${basic}`
+            },
             body: form,
         });
 
